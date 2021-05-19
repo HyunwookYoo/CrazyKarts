@@ -37,7 +37,15 @@ private:
 
 	// The number of degrees rotated per second at full control throw (degrees/s).	
 	UPROPERTY(EditAnywhere)
-	float MaxDegreesPerSecond = 90.f;
+	float MinTurningRadius = 10.f;
+
+	// Higher means more drag
+	UPROPERTY(EditAnywhere)
+	float DragCoefficient = 16.f;
+
+	// Higher means more rolling resistance
+	UPROPERTY(EditAnywhere)
+	float RollingResistanceCoefficient = .001f;
 
 	FVector Velocity;
 	float Throttle;
@@ -47,4 +55,6 @@ private:
 	void MoveRight(float Axis);
 	void UpdateLocationFromVelocity(float DeltaTime);
 	void UpdateCarRotation(float DeltaTime);
+	FVector GetAirResistance();
+	FVector GetRollingResistance();
 };
