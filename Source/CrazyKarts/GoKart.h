@@ -47,7 +47,26 @@ private:
 	UPROPERTY(EditAnywhere)
 	float RollingResistanceCoefficient = .001f;
 
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_MoveForward(float Axis);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_MoveRight(float Axis);
+
 	FVector Velocity;
+
+	/*UPROPERTY(ReplicatedUsing = OnRep_ReplicatedTransform)
+	FVector ReplicatedLocation;
+
+	UPROPERTY(Replicated)
+	FRotator ReplicatedRotation;*/
+
+	UPROPERTY(ReplicatedUsing = OnRep_ReplicatedTransform)
+	FTransform ReplicatedTransform;
+
+	UFUNCTION()
+	void OnRep_ReplicatedTransform();
+
 	float Throttle;
 	float SteeringThrow;
 
