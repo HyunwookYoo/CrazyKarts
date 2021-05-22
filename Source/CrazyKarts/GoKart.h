@@ -6,6 +6,37 @@
 #include "GameFramework/Pawn.h"
 #include "GoKart.generated.h"
 
+USTRUCT()
+struct FGoKartMove
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY()
+	float Throttle;
+	UPROPERTY()
+	float SteeringThrow;
+
+	UPROPERTY()
+	float DeltaTime;
+	UPROPERTY()
+	float Time;
+};
+
+USTRUCT()
+struct FGoKartState
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY()
+	FVector Velocity;
+
+	UPROPERTY()
+	FTransform Transform;
+
+	UPROPERTY()
+	FGoKartMove LastMove;
+};
+
 UCLASS()
 class CRAZYKARTS_API AGoKart : public APawn
 {
@@ -48,12 +79,11 @@ private:
 	float RollingResistanceCoefficient = .001f;
 
 	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_MoveForward(float Axis);
+	void Server_SendMove(FGoKartMove LastMove);
 
-	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_MoveRight(float Axis);
+	UPROPERTY(ReplicatedUsing = OnRep_ServerState)
+	FGoKartState ServerState;
 
-	UPROPERTY(Replicated)
 	FVector Velocity;
 
 	/*UPROPERTY(ReplicatedUsing = OnRep_ReplicatedTransform)
@@ -62,22 +92,20 @@ private:
 	UPROPERTY(Replicated)
 	FRotator ReplicatedRotation;*/
 
-	UPROPERTY(ReplicatedUsing = OnRep_ReplicatedTransform)
-	FTransform ReplicatedTransform;
-
 	UFUNCTION()
-	void OnRep_ReplicatedTransform();
+	void OnRep_ServerState();
 
-	UPROPERTY(Replicated)
 	float Throttle;
-
-	UPROPERTY(Replicated)
 	float SteeringThrow;
+	TArray<FGoKartMove> UnacknowledgedMoves;
 
+	void SimulateMove(FGoKartMove Move);
+	FGoKartMove CreateMove(float DeltaTime);
+	void ClearAcknowledgedMoves(FGoKartMove LastMove);
 	void MoveForward(float Axis);
 	void MoveRight(float Axis);
 	void UpdateLocationFromVelocity(float DeltaTime);
-	void UpdateCarRotation(float DeltaTime);
+	void UpdateCarRotation(float DeltaTime, float SteeringThrowForMove);
 	FVector GetAirResistance();
 	FVector GetRollingResistance();
 };
