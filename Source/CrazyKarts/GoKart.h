@@ -4,38 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "GoKartMovementComponent.h"
+#include "GoKartMovementReplicator.h"
 #include "GoKart.generated.h"
 
-USTRUCT()
-struct FGoKartMove
-{
-	GENERATED_USTRUCT_BODY()
 
-	UPROPERTY()
-	float Throttle;
-	UPROPERTY()
-	float SteeringThrow;
-
-	UPROPERTY()
-	float DeltaTime;
-	UPROPERTY()
-	float Time;
-};
-
-USTRUCT()
-struct FGoKartState
-{
-	GENERATED_USTRUCT_BODY()
-
-	UPROPERTY()
-	FVector Velocity;
-
-	UPROPERTY()
-	FTransform Transform;
-
-	UPROPERTY()
-	FGoKartMove LastMove;
-};
 
 UCLASS()
 class CRAZYKARTS_API AGoKart : public APawn
@@ -49,8 +22,6 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-
-
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
@@ -59,32 +30,10 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	UPROPERTY(EditAnywhere)
-	float Mass = 1000;
-
-	// The force applied to the car when the throttle is fully down (N).
-	UPROPERTY(EditAnywhere)
-	float MaxDrivingForce = 10000;
-
-	// The number of degrees rotated per second at full control throw (degrees/s).	
-	UPROPERTY(EditAnywhere)
-	float MinTurningRadius = 10.f;
-
-	// Higher means more drag
-	UPROPERTY(EditAnywhere)
-	float DragCoefficient = 16.f;
-
-	// Higher means more rolling resistance
-	UPROPERTY(EditAnywhere)
-	float RollingResistanceCoefficient = .001f;
-
-	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_SendMove(FGoKartMove LastMove);
-
-	UPROPERTY(ReplicatedUsing = OnRep_ServerState)
-	FGoKartState ServerState;
-
-	FVector Velocity;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UGoKartMovementComponent* GoKartMovementComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UGoKartMovementReplicator* GoKartMovementReplicator;
 
 	/*UPROPERTY(ReplicatedUsing = OnRep_ReplicatedTransform)
 	FVector ReplicatedLocation;
@@ -92,20 +41,8 @@ private:
 	UPROPERTY(Replicated)
 	FRotator ReplicatedRotation;*/
 
-	UFUNCTION()
-	void OnRep_ServerState();
-
-	float Throttle;
-	float SteeringThrow;
-	TArray<FGoKartMove> UnacknowledgedMoves;
-
-	void SimulateMove(FGoKartMove Move);
-	FGoKartMove CreateMove(float DeltaTime);
-	void ClearAcknowledgedMoves(FGoKartMove LastMove);
+	
+	
 	void MoveForward(float Axis);
 	void MoveRight(float Axis);
-	void UpdateLocationFromVelocity(float DeltaTime);
-	void UpdateCarRotation(float DeltaTime, float SteeringThrowForMove);
-	FVector GetAirResistance();
-	FVector GetRollingResistance();
 };
