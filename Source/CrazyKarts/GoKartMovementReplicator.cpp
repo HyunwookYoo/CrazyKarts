@@ -5,6 +5,7 @@
 
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/GameStateBase.h"
 
 // Sets default values for this component's properties
 UGoKartMovementReplicator::UGoKartMovementReplicator()
@@ -49,8 +50,6 @@ void UGoKartMovementReplicator::TickComponent(float DeltaTime, ELevelTick TickTy
 	if (GetOwnerRole() == ROLE_SimulatedProxy)
 	{
 		ClientTick(DeltaTime);
-		
-		
 	}
 
 }
@@ -189,6 +188,7 @@ void UGoKartMovementReplicator::Server_SendMove_Implementation(FGoKartMove LastM
 {
 	if (MovementComponent == nullptr) return;
 
+	ClientsSimulatedTime += LastMove.DeltaTime;
 	MovementComponent->SimulateMove(LastMove);
 
 	UpdateServerState(LastMove);
@@ -196,6 +196,20 @@ void UGoKartMovementReplicator::Server_SendMove_Implementation(FGoKartMove LastM
 
 bool UGoKartMovementReplicator::Server_SendMove_Validate(FGoKartMove LastMove)
 {
-	return true; // TODO: Make better validation
+	float ProposedTime = ClientsSimulatedTime + LastMove.DeltaTime;
+	bool ClientNotRunningAhead = ProposedTime <= GetWorld()->GetGameState()->GetServerWorldTimeSeconds();
+	if (!ClientNotRunningAhead)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Client is runing too fast."));
+		return false;
+	}
+
+	if (!LastMove.IsValid())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Received invalid move."));
+		return false;
+	}
+
+	return true;
 }
 

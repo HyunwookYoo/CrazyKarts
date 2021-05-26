@@ -68,6 +68,8 @@ private:
 	FTransform ClientStartTransform;
 	FVector ClientStartVelocity;
 
+	float ClientsSimulatedTime;
+
 	void ClearAcknowledgedMoves(FGoKartMove LastMove);
 	void UpdateServerState(const FGoKartMove& Move);
 	void ClientTick(float DeltaTime);
